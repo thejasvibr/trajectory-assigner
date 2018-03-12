@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+""" GUI that loads audio-video trajectory data and allows visual inspection
 Created on Sat Mar 10 11:54:14 2018
 
 @author: tbeleyur
@@ -13,11 +13,7 @@ plt.switch_backend('Qt4Agg')
 from matplotlib.widgets import Button,  CheckButtons, TextBox
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
-import sys
-stdout = sys.stdout
-reload(sys)
-sys.setdefaultencoding('utf-8')
-sys.stdout = stdout
+
 
 class traj_cleaner():
     
@@ -46,7 +42,7 @@ class traj_cleaner():
                 
        
             
-    def initiate_plot(self):       
+    def initiate_plot(self):     
         
         self.a0.plot(self.disp_data['x_knwn'],self.disp_data['y_knwn'],
                      self.disp_data['z_knwn'],'-*')
@@ -56,8 +52,7 @@ class traj_cleaner():
     
     
     def update_starttime(self, user_input):
-        '''
-        '''
+        
         self.starttime = float(user_input)  
         self.update_displayplot(True)
         
