@@ -138,17 +138,18 @@ def make_knwnplot(traj_data):
 
 
 known_glyphs, labld_glyphs, labld_points, known_points = make_knwnplot(disp_data)
+all_pointsxyz = [known_points, labld_points]
+all_glyphs = [ known_glyphs.actor.actors, labld_glyphs.actor.actors]
+
+x, y, z = conv_to_XYZ(raw_data[['x_knwn','y_knwn','z_knwn']])
+x_lab, y_lab, z_lab = conv_to_XYZ(raw_data[['x','y','z']])
+
 
 outline = mlab.outline(line_width=3,color=(0.9,0.9,0.9))
 outline.outline_mode = 'cornered'
-x, y, z = conv_to_XYZ(raw_data[['x_knwn','y_knwn','z_knwn']].dropna())
-x_lab, y_lab, z_lab = conv_to_XYZ(raw_data[['x','y','z']])
-
 outline.bounds = (x[0]-0.1, x[0]+0.1,
                   y[0]-0.1, y[0]+0.1,
-                  z[0]-0.1, z[0]+0.1)
-
-
+                 z[0]-0.1, z[0]+0.1)
 
 reassign_outline = mlab.outline(line_width=3,color= (1,1,1))
 reassign_outline.bounds = (x[0]-0.1, x[0]+0.1,
@@ -161,21 +162,39 @@ click_text = mlab.text(0.6,0.6,' not clicked')
 traj_text = mlab.text(0.6,0.7,'Trajectory number')
 
 def picker_labpts_callback(picker):
-    """ Picker callback: this get called when on pick events.
+    """ A square frame appears around either the known or the
+    labelled points. 
     """
     click_text.text=''
     
+    closest_glyph = [picker.actor in disp_glyphs for disp_glyphs in all_glyphs ]
     
-    if picker.actor in labld_glyphs.actor.actors:
+    
+    try:
+        which_glyph = int(np.argwhere(closest_glyph) )
+        print('which_glyph',which_glyph)
+        
+        points_xyz = all_pointsxyz[which_glyph]
+    except:
+        return()
+    
+    
+    if picker.actor in all_glyphs[which_glyph]:
        
         print(picker.point_id)
-        point_id = picker.point_id/labld_points.shape[0]
+        point_id = picker.point_id/points_xyz.shape[0]
         print('point_id',point_id)
         # If the no points have been selected, we have '-1'
         if point_id != -1:
             # Retrieve the coordinnates coorresponding to that data
             # point
-            x_pt, y_pt, z_pt = x_lab[point_id], y_lab[point_id], z_lab[point_id]
+            if which_glyph==0:
+                print('known point chosen')
+                x_pt, y_pt, z_pt = x[point_id], y[point_id], z[point_id]
+                print(x.shape)
+            else:
+                x_pt, y_pt, z_pt = x_lab[point_id], y_lab[point_id], z_lab[point_id]
+                
             # Move the outline to the data point.
             outline.bounds = (x_pt-0.1, x_pt+0.1,
                               y_pt-0.1, y_pt+0.1,
@@ -236,40 +255,6 @@ def reassign_callback(picker):
     return(make_knwnplot(disp_data))
 
 
-def picker_knwn_pts(picker):
-    '''
-    Display information on the known points
-    '''
-    if picker.actor in known_glyphs.actor.actors:
-       
-        print(picker.point_id)
-        point_id = picker.point_id/known_points.shape[0]
-        print('point_id',point_id)
-        # If the no points have been selected, we have '-1'
-        if point_id != -1:
-            # Retrieve the coordinnates coorresponding to that data
-            # point
-            x_pt, y_pt, z_pt = x[point_id], y[point_id], z[point_id]
-            # Move the outline to the data point.
-            outline.bounds = (x_pt-0.1, x_pt+0.1,
-                              y_pt-0.1, y_pt+0.1,
-                              z_pt-0.1, z_pt+0.1)
-        
-            # display the x,y,z and time info on the selected point        
-            click_text.text = str([np.around(x_pt,2),
-                                       np.around(y_pt,2), np.around(z_pt,2)
-                                       , raw_data['t_knwn'][point_id]]) 
-            # display the trajectory number of the selected point 
-            traj_text.text = 'BLAH number: ' + str(disp_data['traj_num'][point_id])
-        
-        
-        else:
-            print('failed :', point_id)
-        
-
-
-
-
 
 picker = figure.on_mouse_pick(picker_labpts_callback)
 picker.tolerance = 0.005
@@ -278,9 +263,6 @@ picker.tolerance = 0.005
 reassign_picker = figure.on_mouse_pick(reassign_callback,
                                        type='point',   button='Right')
 reassign_picker.tolerance = 0.01
-
-knwnpt_picker = figure.on_mouse_pick(picker_knwn_pts,type='point',button='Middle')
-
 
 
 
