@@ -24,9 +24,34 @@ from mayavi.core.ui.api import MayaviScene, SceneEditor, \
 class MyModel(HasTraits):      
     
     Time_range_start = Range(0, 30.0,0.001)#mode='spinner')
-    Time_range_end= Range(0, 30.0,2)#mode='spinner')
+    Time_range_end= Range(0, 30.0,1.2)#mode='spinner')
     scene = Instance(MlabSceneModel, ())   
     
+    labld_glyphs = None
+    known_glyphs = None
+    
+    outline = None
+    
+    @on_trait_change('scene.activated')
+    def setup(self):
+        print('running setup')
+        self.generate_color_and_size()
+        self.fig = mlab.figure(figure=mlab.gcf())
+        self.update_plot()
+        
+        self.picker = self.fig.on_mouse_pick(self.view_point_information)
+        self.picker.tolerance = 0.01
+        print(self.picker.tolerance)
+        self.outline = mlab.outline(line_width=3,color=(0.9,0.9,0.9),
+                                        )
+        
+        self.outline.outline_mode = 'cornered'
+        self.outline.bounds = (0.05, 0.05,
+                                  0.05, 0.05,
+                                  0.05, 0.05)
+        
+        self.click_text = mlab.text(0.8,0.8,'STARTING INFO')
+        mlab.axes()
     
     @on_trait_change(['Time_range_start','Time_range_end'])      
     def update_plot(self):
@@ -49,30 +74,44 @@ class MyModel(HasTraits):
             
         '''
         print('updating plotted data')
-        mlab.clf()
-
+        #mlab.clf(figure=self.fig)
+         
+        
         self.tsubset_knwntraj = self.subset_in_time(self.knwntraj_data)
         self.tsubset_labldtraj = self.subset_in_time(self.labtraj_data,False)
-        #print(self.tsubset_knwntraj)
+        
             
         self.x_knwn,self.y_knwn,self.z_knwn = conv_to_XYZ(self.tsubset_knwntraj[['x_knwn','y_knwn','z_knwn']])
         self.x,self.y,self.z = conv_to_XYZ(self.tsubset_labldtraj[['x','y','z']])
         
         # verified points 
-        self.known_glyphs = mlab.points3d(self.x_knwn, self.y_knwn, self.z_knwn,
+        if self.known_glyphs is None:
+            self.known_glyphs = mlab.points3d(self.x_knwn, self.y_knwn,
+                                              self.z_knwn,
                                      scale_factor=0.05,
                                      mode='sphere', colormap='hsv',
-                                     figure=self.fig)    
+                                     figure=self.fig)  
+        else:
+            self.known_glyphs.mlab_source.reset(x = self.x_knwn,
+                                                y = self.y_knwn,
+                                                z = self.z_knwn)
+            
         self.known_glyphs.glyph.scale_mode = 'scale_by_vector'
         self.known_glyphcolors = np.array(self.tsubset_knwntraj['colors'])
         self.known_glyphs.mlab_source.dataset.point_data.scalars = self.known_glyphcolors
         
         #auto/manually labelled points which need to be checked
-        self.labld_glyphs = mlab.points3d(self.x, self.y, self.z,
-                                          scale_factor=0.05
-                                     , mode='cube', colormap='hsv',
+        if self.labld_glyphs is None:
+            self.labld_glyphs = mlab.points3d(self.x, self.y, self.z,
+                                              scale_factor=0.05,
+                                     mode='sphere', colormap='hsv',
                                      figure=self.fig)
-        
+        else:
+            self.labld_glyphs.mlab_source.reset(x = self.x,
+                                                y = self.y,
+                                                z = self.z)
+            
+                    
         self.labld_glyphs.glyph.scale_mode = 'scale_by_vector'
         self.labld_glyphcolors = np.array(self.tsubset_labldtraj['colors'])
         self.labld_glyphs.mlab_source.dataset.point_data.scalars = np.array(self.labld_glyphcolors)
@@ -81,6 +120,8 @@ class MyModel(HasTraits):
         self.labld_points = self.labld_glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
         self.knwn_points = self.known_glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
         
+        
+        mlab.draw(figure=self.fig)
    
     
     def subset_in_time(self,traj_df,known=True):
@@ -125,27 +166,10 @@ class MyModel(HasTraits):
 
         # generate columns with the required information for plotting for 
         # both datasets 
-    @on_trait_change('scene.activated')
-    def setup(self):
-        self.generate_color_and_size()
-        self.fig = mlab.figure(figure=self.scene.mayavi_scene)
-        self.update_plot()
-        
-        self.picker = self.fig.on_mouse_pick(self.view_point_information)
-        self.picker.tolerance = 0.01
-        
-        
-        
-        
-    def generate_color_and_size(self):
-        for each_trajtype in [self.knwntraj_data, self.labtraj_data]:        
-            each_trajtype['colors'] = each_trajtype['traj_num'].apply(assign_colors_float,1)                 
-            each_trajtype['size'] = np.tile(0.05,each_trajtype.shape[0])
-              
-        
     
-        self.end_time = np.max([np.max(self.labtraj_data['t']),
-                           np.max(self.knwntraj_data['t_knwn'])])
+        
+   
+    
     
     def view_point_information(self,picker):
         '''Callback function when a glyph is left-button clicked. 
@@ -153,12 +177,10 @@ class MyModel(HasTraits):
         
         '''
         print('MOUSE CALLBACK')
+            
         
-        self.click_text = mlab.text(0.8,0.8,'')
-        self.outline = mlab.outline(line_width=3,color=(0.9,0.9,0.9),
-                                        figure=self.fig)
-        self.outline.outline_mode = 'cornered'
-        self.outline.visible = False 
+        self.click_text.text = ''
+ 
         
         all_glyphs = [ self.known_glyphs.actor.actors, 
                                           self.labld_glyphs.actor.actors]
@@ -176,9 +198,9 @@ class MyModel(HasTraits):
             return()
             
         if which_glyph == 0:
-            time_col = 't'
-        elif which_glyph == 1:
             time_col = 't_knwn'
+        elif which_glyph == 1:
+            time_col = 't'
         print('time col:', time_col)
         
         if picker.actor in all_glyphs[which_glyph]:
@@ -205,18 +227,18 @@ class MyModel(HasTraits):
                 self.outline.visible = True
                         
                 #display the x,y,z and time info on the selected point #
-                print(self.tsubset_knwntraj.head())
-                if which_glyph == 1:
-                    time_stamp = np.around(self.tsubset_knwntraj[time_col][point_id],6)
+                
+                if which_glyph == 0:
+                    time_stamp = np.around(self.tsubset_knwntraj[time_col][point_id],4)
                     
                 else :
-                    time_stamp = np.around(self.tsubset_labldtraj[time_col][point_id],6)
+                    time_stamp = np.around(self.tsubset_labldtraj[time_col][point_id],4)
                     
                 self.click_text.text = str([np.around(x_pt,2),
                                            np.around(y_pt,2), np.around(z_pt,2)
                                            ,time_stamp ]) 
-                 #display the trajectory number of the selected point 
-                 #                self.traj_text.text = 'Traj number: ' + str(disp_data['traj_num'][point_id])
+                #display the trajectory number of the selected point 
+                #self.traj_text.text = 'Traj number: ' + str(disp_data['traj_num'][point_id])
             
             
             
@@ -224,7 +246,14 @@ class MyModel(HasTraits):
             else:
                 print('failed :', point_id)
             
+    def generate_color_and_size(self):
+        for each_trajtype in [self.knwntraj_data, self.labtraj_data]:        
+            each_trajtype['colors'] = each_trajtype['traj_num'].apply(assign_colors_float,1)                 
+            each_trajtype['size'] = np.tile(0.05,each_trajtype.shape[0])
+                     
     
+        self.end_time = np.max([np.max(self.labtraj_data['t']),
+                           np.max(self.knwntraj_data['t_knwn'])]) 
         
     def trajectory_reassignment(self):
         '''Callback function when the user right-clicks on the displayed points
@@ -305,6 +334,6 @@ if __name__ == '__main__':
     my_model.knwntraj_data = kn_data
     my_model.labtraj_data = lab_data
     my_model.configure_traits()
-    my_model.setup()    
+  
     
     
