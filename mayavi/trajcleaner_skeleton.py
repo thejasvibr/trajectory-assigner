@@ -39,6 +39,9 @@ class TrajCleaner(HasTraits):
     outline = None
     labld_glyphcolors = None 
     
+    trajtags= [0,1,2]  # dummy
+    tag_size = 0.05
+    
     @on_trait_change('scene.activated')
     def setup(self):
         print('running setup')
@@ -96,7 +99,7 @@ class TrajCleaner(HasTraits):
             
         '''
         print('updating plotted data')
-       
+        #mlab.gcf().scene.disable_render = True 
         self.tsubset_knwntraj = self.subset_in_time(self.knwntraj_data)
         self.tsubset_labldtraj = self.subset_in_time(self.labtraj_data,False)
         
@@ -161,8 +164,10 @@ class TrajCleaner(HasTraits):
         self.labld_points = self.labld_glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
         self.knwn_points = self.known_glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
         
+        self.create_trajectorytags()
         
-        mlab.draw(figure=self.fig)         
+        #mlab.gcf().scene.disable_render = False 
+        #mlab.draw(figure=self.fig)         
 
   
     
@@ -397,7 +402,41 @@ class TrajCleaner(HasTraits):
         except:
             print('Unable to re-assign !!') 
 
-
+    def create_trajectorytags(self):
+        '''Make a label which shows the trajectory number for each plotted point
+        '''
+        for each_tag in self.trajtags:
+            try:
+                each_tag.visible = False # clear out all traj labels             
+                
+            except:
+                print('failed removal')
+                pass
+        self.trajtags[:] = []
+        
+        
+        known_data = self.tsubset_knwntraj[['x_knwn','y_knwn','z_knwn','traj_num']]
+        labld_data = self.tsubset_labldtraj[['x','y','z','traj_num']]
+        
+        
+                
+        for point_collection in [known_data, labld_data]:
+            for i,each_row in point_collection.iterrows():                
+                try:
+                    trajtag = mlab.text3d(each_row.x_knwn,
+                                          each_row.y_knwn,
+                                          each_row.z_knwn,
+                            str(each_row.traj_num),
+                            scale=self.tag_size,
+                            figure=mlab.gcf())
+                except:
+                    trajtag = mlab.text3d(each_row.x,each_row.y,each_row.z,
+                            str(each_row.traj_num),scale=self.tag_size,
+                            figure=mlab.gcf())
+            
+            
+                self.trajtags.append(trajtag)
+            
 
 num_colors = 10
 traj_2_color_float = {  i+1 : (i+0.5)/num_colors    for i in range(num_colors)    }
