@@ -6,7 +6,7 @@ Created on Mon Mar 19 13:17:09 2018
 @author: tbeleyur
 """
 
-
+import easygui as eg
 import numpy as np 
 import pandas as pd
 
@@ -40,16 +40,27 @@ class MyModel(HasTraits):
         self.fig = mlab.figure(figure=mlab.gcf())
         self.update_plot()
         
-        self.picker = self.fig.on_mouse_pick(self.view_point_information)
-        self.picker.tolerance = 0.01
-        print(self.picker.tolerance)
-        self.outline = mlab.outline(line_width=3,color=(0.9,0.9,0.9),
-                                        )
+        # The general mouse based clicker - which reveals point information
+        # of the known and labelled datapoints
+        self.info_picker = self.fig.on_mouse_pick(self.view_point_information)
+        self.info_picker.tolerance = 0.01
         
+        # picker which allows to re-assign the point trajectory number
+        self.reassign_picker = self.fig.on_mouse_pick(self.reassign_callback,
+                                                      type='point',
+                                                      button='Right')
+        
+        # outline which indicates which point has been clicked on
+        self.outline = mlab.outline(line_width=3,color=(0.9,0.9,0.9),
+                                   )        
         self.outline.outline_mode = 'cornered'
         self.outline.bounds = (0.05, 0.05,
                                   0.05, 0.05,
                                   0.05, 0.05)
+        
+        
+        
+        
         
         self.click_text = mlab.text(0.8,0.8,'STARTING INFO')
         self.traj_text = mlab.text(0.8,0.6,'Trajectory number')
@@ -79,9 +90,7 @@ class MyModel(HasTraits):
             
         '''
         print('updating plotted data')
-        #mlab.clf(figure=self.fig)
-         
-        
+       
         self.tsubset_knwntraj = self.subset_in_time(self.knwntraj_data)
         self.tsubset_labldtraj = self.subset_in_time(self.labtraj_data,False)
         
@@ -92,8 +101,7 @@ class MyModel(HasTraits):
         #set colors for each point 
         self.known_glyphcolors = np.array(self.tsubset_knwntraj['colors'])  
         self.labld_glyphcolors = np.array(self.tsubset_labldtraj['colors']) 
-#        print('known_glyphcolors', self.known_glyphcolors)
-#        print('labld_glyphcolors', self.labld_glyphcolors)
+   
         # verified points 
         if self.known_glyphs is None:
             # if the glyphs are being called the first time
@@ -121,7 +129,7 @@ class MyModel(HasTraits):
             self.known_glyphs.glyph.scale_mode = 'scale_by_vector'            
             self.known_glyphs.mlab_source.dataset.point_data.scalars = self.known_glyphcolors
                     
-        
+            self.known_glyphs.mlab_source.update()
         #auto/manually labelled points which need to be checked
         if self.labld_glyphs is None:
             
@@ -129,12 +137,17 @@ class MyModel(HasTraits):
                                               scale_factor=0.05,
                                      mode='cube', colormap='hsv',
                                      figure=self.fig)
-            self.labld_glyphs.glyph.scale_mode = 'scale_by_vector'            
+            self.labld_glyphs.glyph.scale_mode = 'scale_by_vector'
+            
             self.labld_glyphs.mlab_source.dataset.point_data.scalars = self.labld_glyphcolors
         else:
             self.labld_glyphs.mlab_source.reset(x = self.x,
                                                 y = self.y,
-                                                z = self.z)
+                                                z = self.z,
+                                                scale_factor=0.05,
+                                     mode='cube', colormap='hsv',
+                                     figure=self.fig,
+                                     scalars = self.labld_glyphcolors)
             self.labld_glyphs.glyph.scale_mode = 'scale_by_vector'                  
             self.labld_glyphs.mlab_source.dataset.point_data.scalars = self.labld_glyphcolors                    
                     
@@ -143,48 +156,7 @@ class MyModel(HasTraits):
         self.knwn_points = self.known_glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
         
         
-        mlab.draw(figure=self.fig)
-   
-    
-    def subset_in_time(self,traj_df,known=True):
-        '''Make a subset of the knwon and labelled trajectory datasets
-        such that the points displayed fall wihtin the start and end time
-        of the user input.
-        
-        Parameters:
-            
-            traj_df : pd.DataFrame with at least one column named either 't'
-                        or 't_knwn'
-            known : Boolean. Defaults to True.
-                    If True:
-                        the column used for subsetting should be called 't'
-                    If False:
-                        the column used for subsetting should be called 't_knwn'
-            
-        Returns:
-            
-            tsubset_df : pd.DataFrame with at least one column named 
-                        either 't' or 't_knwn'. See 'known'.
-                                   
-        
-        '''
-        colname = {True:'t_knwn', False:'t'}
-        
-        if self.Time_range_end <= self.Time_range_start:
-            print('invalid Time range!')
-            return(None)
-        
-        try:
-            time_after = traj_df[colname[known]] >= self.Time_range_start
-            time_before = traj_df[colname[known]] <= self.Time_range_end
-            
-            tsubset_df = traj_df[ (time_after) & (time_before ) ]
-            tsubset_df = tsubset_df.reset_index(drop=True)
-            
-            return(tsubset_df)
-        except:
-            print('Wrong time ranges !! ')
-         
+        mlab.draw(figure=self.fig)         
 
   
     
@@ -266,29 +238,83 @@ class MyModel(HasTraits):
          
             else:
                 print('failed :', point_id)
-            
-    def generate_color_and_size(self):
-        for each_trajtype in [self.knwntraj_data, self.labtraj_data]:        
-            each_trajtype['colors'] = each_trajtype['traj_num'].apply(assign_colors_float,1)                 
-            each_trajtype['size'] = np.tile(0.05,each_trajtype.shape[0])
-                     
+                
+    def reassign_callback(self,picker):
+        """ Picker callback: this get called when on pick events.
+        """       
+        print('RIGHT CLICK DETECTED')
+        
+        if picker.actor in self.labld_glyphs.actor.actors:
+   
+            print(picker.point_id)
+            point_id = picker.point_id/self.labld_points.shape[0]
+            print('point_id',point_id)
+            # If the no points have been selected, we have '-1'
+            if point_id != -1:
+                # Retrieve the coordinnates coorresponding to that data
+                # point
+                print('labelled point chosen')
+        
+                x_pt, y_pt, z_pt = self.x[point_id], self.y[point_id],  self.z[point_id]                
+                # Move the outline to the data point.
+                self.outline.bounds = (x_pt-0.15, x_pt+0.15,
+                                  y_pt-0.15, y_pt+0.15,
+                                  z_pt-0.15, z_pt+0.15)
+                
+                self.outline.visible = True
+                try:        
+                    new_trajnum = eg.integerbox('Please enter the re-assigned trajectory number',
+                                                lowerbound=1,upperbound=99)
+                    print('New traj num', new_trajnum)
+                    
+                    self.trajectory_reassignment(new_trajnum,point_id)                    
+                   
+                except:
+                    print('Unable to re-assign point')
+                              
     
-        self.end_time = np.max([np.max(self.labtraj_data['t']),
-                           np.max(self.knwntraj_data['t_knwn'])]) 
+                
+                
+    def subset_in_time(self,traj_df,known=True):
+        '''Make a subset of the knwon and labelled trajectory datasets
+        such that the points displayed fall wihtin the start and end time
+        of the user input.
         
-    def trajectory_reassignment(self):
-        '''Callback function when the user right-clicks on the displayed points
-        which triggers a user input box and also performs a change in traject-
-        ory number in the original dataset
+        Parameters:
+            
+            traj_df : pd.DataFrame with at least one column named either 't'
+                        or 't_knwn'
+            known : Boolean. Defaults to True.
+                    If True:
+                        the column used for subsetting should be called 't'
+                    If False:
+                        the column used for subsetting should be called 't_knwn'
+            
+        Returns:
+            
+            tsubset_df : pd.DataFrame with at least one column named 
+                        either 't' or 't_knwn'. See 'known'.
+                                   
+        
         '''
+        colname = {True:'t_knwn', False:'t'}
         
+        if self.Time_range_end <= self.Time_range_start:
+            print('invalid Time range!')
+            return(None)
         
-    def identify_orig_rowindex(self):
-        '''When a point has been chosen for trajectory re-assignment, 
-        find its original row index in the dataset and change the value there
-        '''
+        try:
+            time_after = traj_df[colname[known]] >= self.Time_range_start
+            time_before = traj_df[colname[known]] <= self.Time_range_end
+            
+            tsubset_df = traj_df[ (time_after) & (time_before ) ]
+            tsubset_df = tsubset_df.reset_index(drop=True)
+            
+            return(tsubset_df)
+        except:
+            print('Wrong time ranges !! ')                     
+                
         
-        pass
          
         
     
@@ -300,6 +326,71 @@ class MyModel(HasTraits):
                      ),
                 resizable=True,
                 )
+    
+            
+          
+    def identify_orig_rowindex(self,orig_df,df_row):
+        '''When a point has been chosen for trajectory re-assignment, 
+        find its original row index in the dataset and change the value there
+        
+        Parameters:
+            
+            orig_df : pd.DataFrame with multiple rows and columns
+            
+            df_row : 1 x Ncolumns pd.DataFrame. 
+            
+        Returns:
+            
+            orig_index : int. Row index of the original DataFrame pd1 with 
+                        values that match df_row
+        
+        
+        '''
+        x_match = orig_df['x'] == df_row.x
+        y_match = orig_df['y'] == df_row.y
+        z_match = orig_df['z'] == df_row.z
+        
+        try:
+            row_index = orig_df.loc[x_match & y_match & z_match].index
+            return(row_index)
+        except:
+            print('Matching row not found !! Returning None')
+            
+    def generate_color_and_size(self):
+            for each_trajtype in [self.knwntraj_data, self.labtraj_data]:        
+                each_trajtype['colors'] = each_trajtype['traj_num'].apply(assign_colors_float,1)                 
+                each_trajtype['size'] = np.tile(0.05,each_trajtype.shape[0])
+                         
+        
+            self.end_time = np.max([np.max(self.labtraj_data['t']),
+                               np.max(self.knwntraj_data['t_knwn'])]) 
+        
+    def trajectory_reassignment(self, new_trajnum, pt_id):
+        '''Re-assigns the trajectory number of a labelled point in the original 
+        labld_traj pd.DataFrame
+        
+        Parameters:
+            
+            new_trajnum: int. New trajectory number
+            
+            pt_id : int. row number of the tsubset_labdtraj which needs to be
+                    accessed
+        '''
+        
+        self.current_row = self.tsubset_labldtraj.loc[pt_id]
+        
+        print('trying to re-assign')
+        print(self.current_row)
+        orig_index = self.identify_orig_rowindex(self.labtraj_data, self.current_row)
+        
+        try:
+            self.labtraj_data['traj_num'][orig_index] = new_trajnum
+            
+            print('Trajectory succesfully re-assigned for point #'+str(orig_index))
+            self.update_plot()
+        except:
+            print('Unable to re-assign !!') 
+
 
 
 num_colors = 10
@@ -336,21 +427,24 @@ def conv_to_XYZ(pd_df):
         
         
    
-if __name__ == '__main__':
-    xyz = np.random.normal(0,1,42).reshape((-1,3))
+if __name__ == '__main__':    
+    lin_inc = np.linspace(0,1.5,25) 
+    lin_inc = np.random.normal(0,1,lin_inc.size)
+    xyz = np.column_stack((lin_inc,lin_inc,lin_inc))
     txyz = np.column_stack((xyz, np.linspace(0,30,xyz.shape[0])))
     kn_data = pd.DataFrame(data=txyz, columns = ['x_knwn','y_knwn',
                                                  'z_knwn','t_knwn'])
     kn_data['traj_num'] = np.random.choice(range(2,4),xyz.shape[0])
     
-    num_pts = 8
-    some_rows = np.random.choice(range(xyz.shape[0]),num_pts,replace=False)
-    xyz_lab = xyz[some_rows,:]
-    t_somerows = txyz[some_rows,3]
+    #num_pts = 25
+    #some_rows = np.random.choice(range(xyz.shape[0]),num_pts,replace=False)
+    xyz_lab = xyz 
+    xyz_lab[:,0] += 0.5
+    t_somerows = txyz[:,3]
     txyz_somerows = np.column_stack((xyz_lab,t_somerows))
     lab_data = pd.DataFrame(data=txyz_somerows, columns = ['x','y','z','t'])
     onecolor_pts = 7
-    lab_data['traj_num'] = np.random.choice(range(2,4),num_pts)#np.concatenate((np.tile(2,onecolor_pts),
+    lab_data['traj_num'] = kn_data['traj_num']#np.random.choice(range(2,4),num_pts)#np.concatenate((np.tile(2,onecolor_pts),
                             #np.tile(1, num_pts-onecolor_pts)))
     
     my_model = MyModel()
