@@ -21,7 +21,13 @@ from mayavi.core.ui.api import MayaviScene, SceneEditor, \
 
 
 
-class MyModel(HasTraits):      
+class TrajCleaner(HasTraits):  
+    '''
+    
+    TODO:
+        1) Implement Numbers that appear above each point in the figure 
+    
+    '''    
     
     Time_range_start = Range(0, 30.0,0.001)#mode='spinner')
     Time_range_end= Range(0, 30.0,29.99)#mode='spinner')
@@ -447,10 +453,10 @@ if __name__ == '__main__':
     lab_data['traj_num'] = kn_data['traj_num']#np.random.choice(range(2,4),num_pts)#np.concatenate((np.tile(2,onecolor_pts),
                             #np.tile(1, num_pts-onecolor_pts)))
     
-    my_model = MyModel()
-    my_model.knwntraj_data = kn_data
-    my_model.labtraj_data = lab_data
-    my_model.configure_traits()
+    traj_cleaner = TrajCleaner()
+    traj_cleaner.knwntraj_data = kn_data
+    traj_cleaner.labtraj_data = lab_data
+    traj_cleaner.configure_traits()
   
     
     
