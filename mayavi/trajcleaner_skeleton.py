@@ -24,13 +24,14 @@ from mayavi.core.ui.api import MayaviScene, SceneEditor, \
 class MyModel(HasTraits):      
     
     Time_range_start = Range(0, 30.0,0.001)#mode='spinner')
-    Time_range_end= Range(0, 30.0,1.2)#mode='spinner')
+    Time_range_end= Range(0, 30.0,29.99)#mode='spinner')
     scene = Instance(MlabSceneModel, ())   
     
     labld_glyphs = None
     known_glyphs = None
     
     outline = None
+    labld_glyphcolors = None 
     
     @on_trait_change('scene.activated')
     def setup(self):
@@ -51,6 +52,10 @@ class MyModel(HasTraits):
                                   0.05, 0.05)
         
         self.click_text = mlab.text(0.8,0.8,'STARTING INFO')
+        self.traj_text = mlab.text(0.8,0.6,'Trajectory number')
+        self.pointtype_text = mlab.text(0.8,0.87,'Point Type')
+        self.pointtype_info = mlab.text(0.8,0.82,'')
+        
         mlab.axes()
     
     @on_trait_change(['Time_range_start','Time_range_end'])      
@@ -59,9 +64,9 @@ class MyModel(HasTraits):
         as circles and the corresponding auto/manually labelled points as 
         squares.         
         
-        TODO:
-            1) make sure the np.nan points in traj_num are being plotted ! 
-            2) 
+       TODO:
+           1) allow for interactive choosing of points even with tsubsetting - DONE
+           2) the POINTCOLORS should remain the same 
         
         Instance  parameters used : 
             
@@ -84,38 +89,55 @@ class MyModel(HasTraits):
         self.x_knwn,self.y_knwn,self.z_knwn = conv_to_XYZ(self.tsubset_knwntraj[['x_knwn','y_knwn','z_knwn']])
         self.x,self.y,self.z = conv_to_XYZ(self.tsubset_labldtraj[['x','y','z']])
         
+        #set colors for each point 
+        self.known_glyphcolors = np.array(self.tsubset_knwntraj['colors'])  
+        self.labld_glyphcolors = np.array(self.tsubset_labldtraj['colors']) 
+#        print('known_glyphcolors', self.known_glyphcolors)
+#        print('labld_glyphcolors', self.labld_glyphcolors)
         # verified points 
         if self.known_glyphs is None:
+            # if the glyphs are being called the first time
             self.known_glyphs = mlab.points3d(self.x_knwn, self.y_knwn,
                                               self.z_knwn,
                                      scale_factor=0.05,
                                      mode='sphere', colormap='hsv',
                                      figure=self.fig)  
+            self.known_glyphs.glyph.scale_mode = 'scale_by_vector'            
+            self.known_glyphs.mlab_source.dataset.point_data.scalars = self.known_glyphcolors           
+            
         else:
+            # only change the traits of the object while keeping its
+            # identity in the scene
+            
+            #goo.gl/H9mdao
+     
+
             self.known_glyphs.mlab_source.reset(x = self.x_knwn,
                                                 y = self.y_knwn,
-                                                z = self.z_knwn)
-            
-        self.known_glyphs.glyph.scale_mode = 'scale_by_vector'
-        self.known_glyphcolors = np.array(self.tsubset_knwntraj['colors'])
-        self.known_glyphs.mlab_source.dataset.point_data.scalars = self.known_glyphcolors
+                                                z = self.z_knwn,
+                                                scale_factor=0.05,
+                                     mode='sphere', colormap='hsv',
+                                     figure=self.fig)
+            self.known_glyphs.glyph.scale_mode = 'scale_by_vector'            
+            self.known_glyphs.mlab_source.dataset.point_data.scalars = self.known_glyphcolors
+                    
         
         #auto/manually labelled points which need to be checked
         if self.labld_glyphs is None:
+            
             self.labld_glyphs = mlab.points3d(self.x, self.y, self.z,
                                               scale_factor=0.05,
-                                     mode='sphere', colormap='hsv',
+                                     mode='cube', colormap='hsv',
                                      figure=self.fig)
+            self.labld_glyphs.glyph.scale_mode = 'scale_by_vector'            
+            self.labld_glyphs.mlab_source.dataset.point_data.scalars = self.labld_glyphcolors
         else:
             self.labld_glyphs.mlab_source.reset(x = self.x,
                                                 y = self.y,
                                                 z = self.z)
-            
+            self.labld_glyphs.glyph.scale_mode = 'scale_by_vector'                  
+            self.labld_glyphs.mlab_source.dataset.point_data.scalars = self.labld_glyphcolors                    
                     
-        self.labld_glyphs.glyph.scale_mode = 'scale_by_vector'
-        self.labld_glyphcolors = np.array(self.tsubset_labldtraj['colors'])
-        self.labld_glyphs.mlab_source.dataset.point_data.scalars = np.array(self.labld_glyphcolors)
-        
         # get the xyz points of the plotted points 
         self.labld_points = self.labld_glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
         self.knwn_points = self.known_glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
@@ -157,19 +179,14 @@ class MyModel(HasTraits):
             time_before = traj_df[colname[known]] <= self.Time_range_end
             
             tsubset_df = traj_df[ (time_after) & (time_before ) ]
+            tsubset_df = tsubset_df.reset_index(drop=True)
             
             return(tsubset_df)
         except:
             print('Wrong time ranges !! ')
-            pass
+         
 
-
-        # generate columns with the required information for plotting for 
-        # both datasets 
-    
-        
-   
-    
+  
     
     def view_point_information(self,picker):
         '''Callback function when a glyph is left-button clicked. 
@@ -214,12 +231,13 @@ class MyModel(HasTraits):
                 # point
                 if which_glyph==0:
                     print('known point chosen')
-                    x_pt, y_pt, z_pt = self.x_knwn[point_id], self.y_knwn[point_id], self.z_knwn[point_id]
-                                                                                                     
-                    
+                    x_pt, y_pt, z_pt = self.x_knwn[point_id], self.y_knwn[point_id], self.z_knwn[point_id]                                                                                                    
+                    pt_type = 'Known'
                 else:
+                    print('labelled point chosen')
+
                     x_pt, y_pt, z_pt = self.x[point_id], self.y[point_id],  self.z[point_id]
-                    
+                    pt_type = 'Labelled'
                 # Move the outline to the data point.
                 self.outline.bounds = (x_pt-0.05, x_pt+0.05,
                                   y_pt-0.05, y_pt+0.05,
@@ -230,16 +248,19 @@ class MyModel(HasTraits):
                 
                 if which_glyph == 0:
                     time_stamp = np.around(self.tsubset_knwntraj[time_col][point_id],4)
+                    traj_num = self.tsubset_knwntraj['traj_num'][point_id]
+                    print('known point traj num:', traj_num)
                     
                 else :
                     time_stamp = np.around(self.tsubset_labldtraj[time_col][point_id],4)
+                    traj_num = self.tsubset_labldtraj['traj_num'][point_id]
                     
                 self.click_text.text = str([np.around(x_pt,2),
                                            np.around(y_pt,2), np.around(z_pt,2)
                                            ,time_stamp ]) 
                 #display the trajectory number of the selected point 
-                #self.traj_text.text = 'Traj number: ' + str(disp_data['traj_num'][point_id])
-            
+                self.traj_text.text = 'Traj number: ' + str(traj_num)
+                self.pointtype_info.text = pt_type
             
             
          
@@ -281,7 +302,7 @@ class MyModel(HasTraits):
                 )
 
 
-num_colors = 20
+num_colors = 10
 traj_2_color_float = {  i+1 : (i+0.5)/num_colors    for i in range(num_colors)    }
          
 def assign_colors_float(X):
@@ -292,7 +313,7 @@ def assign_colors_float(X):
         color = traj_2_color_float[X]
         return(color)
     except:
-        color = 0.01
+        color = 0.99
         return(color)
 
    
@@ -316,19 +337,21 @@ def conv_to_XYZ(pd_df):
         
    
 if __name__ == '__main__':
-    xyz = np.random.normal(0,1,270).reshape((-1,3))
-    txyz = np.column_stack((xyz, np.linspace(0,1.5,xyz.shape[0])))
+    xyz = np.random.normal(0,1,42).reshape((-1,3))
+    txyz = np.column_stack((xyz, np.linspace(0,30,xyz.shape[0])))
     kn_data = pd.DataFrame(data=txyz, columns = ['x_knwn','y_knwn',
                                                  'z_knwn','t_knwn'])
-    kn_data['traj_num'] = np.tile(1,xyz.shape[0])
+    kn_data['traj_num'] = np.random.choice(range(2,4),xyz.shape[0])
     
-    some_rows = np.random.choice(range(xyz.shape[0]),15,replace=False)
+    num_pts = 8
+    some_rows = np.random.choice(range(xyz.shape[0]),num_pts,replace=False)
     xyz_lab = xyz[some_rows,:]
     t_somerows = txyz[some_rows,3]
     txyz_somerows = np.column_stack((xyz_lab,t_somerows))
     lab_data = pd.DataFrame(data=txyz_somerows, columns = ['x','y','z','t'])
-    lab_data['traj_num'] = np.concatenate((np.tile(2,7),
-                            np.tile(1,8)))
+    onecolor_pts = 7
+    lab_data['traj_num'] = np.random.choice(range(2,4),num_pts)#np.concatenate((np.tile(2,onecolor_pts),
+                            #np.tile(1, num_pts-onecolor_pts)))
     
     my_model = MyModel()
     my_model.knwntraj_data = kn_data
