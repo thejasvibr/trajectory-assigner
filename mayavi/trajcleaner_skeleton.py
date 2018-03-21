@@ -23,9 +23,7 @@ from mayavi.core.ui.api import MayaviScene, SceneEditor, \
 
 class TrajCleaner(HasTraits):  
     '''
-    
-    TODO:
-        1) Implement Numbers that appear above each point in the figure 
+        
     
     '''    
     
@@ -41,6 +39,7 @@ class TrajCleaner(HasTraits):
     
     trajtags= [0,1,2]  # dummy
     tag_size = 0.05
+    tag_offset = 2*10**-2
     
     @on_trait_change('scene.activated')
     def setup(self):
@@ -58,6 +57,7 @@ class TrajCleaner(HasTraits):
         self.reassign_picker = self.fig.on_mouse_pick(self.reassign_callback,
                                                       type='point',
                                                       button='Right')
+        self.reassign_picker.tolerance = 0.01
         
         # outline which indicates which point has been clicked on
         self.outline = mlab.outline(line_width=3,color=(0.9,0.9,0.9),
@@ -119,15 +119,13 @@ class TrajCleaner(HasTraits):
                                      scale_factor=0.05,
                                      mode='sphere', colormap='hsv',
                                      figure=self.fig)  
+            # thanks goo.gl/H9mdao
             self.known_glyphs.glyph.scale_mode = 'scale_by_vector'            
             self.known_glyphs.mlab_source.dataset.point_data.scalars = self.known_glyphcolors           
             
         else:
             # only change the traits of the object while keeping its
-            # identity in the scene
-            
-            #goo.gl/H9mdao
-     
+            # identity in the scene  
 
             self.known_glyphs.mlab_source.reset(x = self.x_knwn,
                                                 y = self.y_knwn,
@@ -136,9 +134,8 @@ class TrajCleaner(HasTraits):
                                      mode='sphere', colormap='hsv',
                                      figure=self.fig)
             self.known_glyphs.glyph.scale_mode = 'scale_by_vector'            
-            self.known_glyphs.mlab_source.dataset.point_data.scalars = self.known_glyphcolors
-                    
-            self.known_glyphs.mlab_source.update()
+            self.known_glyphs.mlab_source.dataset.point_data.scalars = self.known_glyphcolors                   
+                        
         #auto/manually labelled points which need to be checked
         if self.labld_glyphs is None:
             
@@ -252,6 +249,14 @@ class TrajCleaner(HasTraits):
                 
     def reassign_callback(self,picker):
         """ Picker callback: this get called when on pick events.
+        
+        A user prompt appears when the picker is triggered for 
+        entry of the trajectory number. Input >=1 and <=99 is expected. 
+        If the trajectory number needs to be set to a NaN, then simply click
+        on 'Cancel'
+        
+        
+        
         """       
         print('RIGHT CLICK DETECTED')
         
@@ -275,7 +280,8 @@ class TrajCleaner(HasTraits):
                 self.outline.visible = True
                 try:        
                     new_trajnum = eg.integerbox('Please enter the re-assigned trajectory number',
-                                                lowerbound=1,upperbound=99)
+                                                lowerbound=1,upperbound=99,
+                                                default = None)
                     print('New traj num', new_trajnum)
                     
                     self.trajectory_reassignment(new_trajnum,point_id)                    
@@ -423,14 +429,16 @@ class TrajCleaner(HasTraits):
         for point_collection in [known_data, labld_data]:
             for i,each_row in point_collection.iterrows():                
                 try:
-                    trajtag = mlab.text3d(each_row.x_knwn,
-                                          each_row.y_knwn,
-                                          each_row.z_knwn,
+                    trajtag = mlab.text3d(each_row.x_knwn + self.tag_offset,
+                                          each_row.y_knwn + self.tag_offset,
+                                          each_row.z_knwn + self.tag_offset,
                             str(each_row.traj_num),
                             scale=self.tag_size,
                             figure=mlab.gcf())
                 except:
-                    trajtag = mlab.text3d(each_row.x,each_row.y,each_row.z,
+                    trajtag = mlab.text3d(each_row.x+ self.tag_offset,
+                                          each_row.y+ self.tag_offset,
+                                          each_row.z+ self.tag_offset,
                             str(each_row.traj_num),scale=self.tag_size,
                             figure=mlab.gcf())
             
