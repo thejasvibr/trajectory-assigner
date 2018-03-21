@@ -39,7 +39,7 @@ class TrajCleaner(HasTraits):
     
     trajtags= [0,1,2]  # dummy
     tag_size = 0.05
-    tag_offset = 2*10**-2
+    tag_offset = 5*10**-2
     
     @on_trait_change('scene.activated')
     def setup(self):
@@ -173,7 +173,7 @@ class TrajCleaner(HasTraits):
         Information on the xyz and time of recording/emission is displayed
         
         '''
-        print('MOUSE CALLBACK')
+        #print('MOUSE CALLBACK')
             
         
         self.click_text.text = ''
@@ -188,7 +188,7 @@ class TrajCleaner(HasTraits):
         
         try:
             which_glyph = int(np.argwhere(closest_glyph) )
-            print('which_glyph',which_glyph)
+            #print('which_glyph',which_glyph)
             
             points_xyz = all_pointsxyz[which_glyph]
         except:
@@ -198,23 +198,23 @@ class TrajCleaner(HasTraits):
             time_col = 't_knwn'
         elif which_glyph == 1:
             time_col = 't'
-        print('time col:', time_col)
+        #print('time col:', time_col)
         
         if picker.actor in all_glyphs[which_glyph]:
            
-            print(picker.point_id)
+            #print(picker.point_id)
             point_id = picker.point_id/points_xyz.shape[0]
-            print('point_id',point_id)
+            #print('point_id',point_id)
             # If the no points have been selected, we have '-1'
             if point_id != -1:
                 # Retrieve the coordinnates coorresponding to that data
                 # point
                 if which_glyph==0:
-                    print('known point chosen')
+                    #print('known point chosen')
                     x_pt, y_pt, z_pt = self.x_knwn[point_id], self.y_knwn[point_id], self.z_knwn[point_id]                                                                                                    
                     pt_type = 'Known'
                 else:
-                    print('labelled point chosen')
+                    #print('labelled point chosen')
 
                     x_pt, y_pt, z_pt = self.x[point_id], self.y[point_id],  self.z[point_id]
                     pt_type = 'Labelled'
@@ -229,7 +229,7 @@ class TrajCleaner(HasTraits):
                 if which_glyph == 0:
                     time_stamp = np.around(self.tsubset_knwntraj[time_col][point_id],4)
                     traj_num = self.tsubset_knwntraj['traj_num'][point_id]
-                    print('known point traj num:', traj_num)
+                    #print('known point traj num:', traj_num)
                     
                 else :
                     time_stamp = np.around(self.tsubset_labldtraj[time_col][point_id],4)
@@ -396,8 +396,8 @@ class TrajCleaner(HasTraits):
         
         self.current_row = self.tsubset_labldtraj.loc[pt_id]
         
-        print('trying to re-assign')
-        print(self.current_row)
+        #print('trying to re-assign')
+        #print(self.current_row)
         orig_index = self.identify_orig_rowindex(self.labtraj_data, self.current_row)
         
         try:
