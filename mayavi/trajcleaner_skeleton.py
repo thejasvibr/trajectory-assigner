@@ -27,7 +27,7 @@ class TrajCleaner(HasTraits):
     
     '''    
     
-    Time_range_start = Range(0, 30.0,0.001)#mode='spinner')
+    Time_range_start = Range(0, 30.0,0.000)#mode='spinner')
     Time_range_end= Range(0, 30.0,29.99)#mode='spinner')
     scene = Instance(MlabSceneModel, ())   
     
@@ -62,7 +62,7 @@ class TrajCleaner(HasTraits):
         # outline which indicates which point has been clicked on
         self.outline = mlab.outline(line_width=3,color=(0.9,0.9,0.9),
                                    )        
-        self.outline.outline_mode = 'cornered'
+        self.outline.outline_mode = 'cornered'update traitsui 
         self.outline.bounds = (0.05, 0.05,
                                   0.05, 0.05,
                                   0.05, 0.05)
@@ -446,7 +446,7 @@ class TrajCleaner(HasTraits):
                 self.trajtags.append(trajtag)
             
 
-num_colors = 10
+num_colors = 13
 traj_2_color_float = {  i+1 : (i+0.5)/num_colors    for i in range(num_colors)    }
          
 def assign_colors_float(X):
