@@ -23,6 +23,13 @@ from mayavi.core.ui.api import MayaviScene, SceneEditor, \
 
 class TrajCleaner(HasTraits):  
     '''
+    TODO : 
+        1) Implement recalculation of point colors everytime the 
+           timesubsetting occurs !!  
+        
+        2) Subsetting of displayed points according to trajectory tags ...
+            coming in the later future maybe ??
+    
     Creates a Mayavi Visualisation window with options to :
         1) Display a time range of the trajectory datasets
         2) View trajectory point information when a point is left-button clicked
