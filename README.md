@@ -55,7 +55,10 @@ User-controlled parameters :
 ## Installation : 
 The primary visualisation package to visualise the data is Mayavi 4.5. As of now the whole module has been written and tested on a Windows 7 64bit, Python 2.7.14 system. Installing Mayavi can be tricky if done the 'normal' way through a standard pip/conda install because of complicated package dependencies.
 
-I've managed installing Mayavi into a conda environment (or perhaps a virtualenv too). Instructions for installing Mayavi are found [here](http://docs.enthought.com/mayavi/mayavi/installation.html). In addition to Mayavi (and its dependences), trajcleaner also relies on Pandas, which needs to be additionally downloaded. If using an Anaconda based Python installation, to replicate the environment used to build trajcleaner in a Windows 64bit system - please use the *mayavi_reqpkgs_spec_file.txt* and run this command in Anaconda Prompt : 
+I've managed installing Mayavi into a conda environment (or perhaps a virtualenv too). Instructions for installing Mayavi are found [here](http://docs.enthought.com/mayavi/mayavi/installation.html). In addition to Mayavi (and its dependences), trajcleaner also relies on Pandas and easyGui which need to be additionally downloaded. 
+
+### Replicating the development environment in an Anaconda Python installation: 
+If using an Anaconda based Python installation, to replicate the environment used to build trajcleaner in a Windows 64bit system - please use the *mayavi_reqpkgs_spec_file.txt* and run this command in Anaconda Prompt : 
  
         conda create --name <env> --file <this file>
  
