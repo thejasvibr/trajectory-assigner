@@ -23,11 +23,51 @@ from mayavi.core.ui.api import MayaviScene, SceneEditor, \
 
 class TrajCleaner(HasTraits):  
     '''
+    TODO : 
+        1) Implement recalculation of point colors everytime the 
+           timesubsetting occurs !!  
         
+        2) Subsetting of displayed points according to trajectory tags ...
+            coming in the later future maybe ??
+    
+    Creates a Mayavi Visualisation window with options to :
+        1) Display a time range of the trajectory datasets
+        2) View trajectory point information when a point is left-button clicked
+        3) Re-assign the *labelled* trajectory points when the point is
+            right-button clicked. If 'Cancel' is pressed OR the window is closed
+            then the trajectory tag is set to nan. 
+    
+    Usage : 
+        # Initiate a TrajCleaner instance 
+        
+        traj_cleaner = TrajCleaner()
+        
+        # assign the labelled and known trajectory datasets to the instance 
+        
+         traj_cleaner.knwntraj_data = kn_data
+         traj_cleaner.labtraj_data = lab_data
+         
+        # begin the Mayavi interactive visualisation
+        
+        traj_cleaner.configure_traits()
+        
+        # After checking the trajectory assignment close the 
+        # Mayavi window and save the labld_traj pd.DataFrame to a csv 
+        
+        traj_cleaner.labld_traj.to_csv('labelled_traj_verified.csv')
+        
+    User-controlled parameters :
+        
+        tag_offset : the distance between the numeric trajectory tag and 
+                     the displayed trajectory points
+        
+        tag_size : size of the numeric trajectory tag  
+      
     
     '''    
     
-    Time_range_start = Range(0, 30.0,0.001)#mode='spinner')
+
+    Time_range_start = Range(0, 30.0,0.000)#mode='spinner')
     Time_range_end= Range(0, 30.0,29.99)#mode='spinner')
     scene = Instance(MlabSceneModel, ())   
     
@@ -39,7 +79,7 @@ class TrajCleaner(HasTraits):
     
     trajtags= [0,1,2]  # dummy
     tag_size = 0.05
-    tag_offset = 5*10**-2
+    tag_offset = 2*10**-2
     
     @on_trait_change('scene.activated')
     def setup(self):
@@ -256,15 +296,13 @@ class TrajCleaner(HasTraits):
         on 'Cancel'
         
         
-        
-        """       
-        print('RIGHT CLICK DETECTED')
+        """              
         
         if picker.actor in self.labld_glyphs.actor.actors:
    
-            print(picker.point_id)
+           
             point_id = picker.point_id/self.labld_points.shape[0]
-            print('point_id',point_id)
+            
             # If the no points have been selected, we have '-1'
             if point_id != -1:
                 # Retrieve the coordinnates coorresponding to that data
@@ -404,6 +442,8 @@ class TrajCleaner(HasTraits):
             self.labtraj_data['traj_num'][orig_index] = new_trajnum
             
             print('Trajectory succesfully re-assigned for point #'+str(orig_index))
+
+            self.generate_color_and_size()
             self.update_plot()
         except:
             print('Unable to re-assign !!') 
@@ -416,8 +456,10 @@ class TrajCleaner(HasTraits):
                 each_tag.visible = False # clear out all traj labels             
                 
             except:
-                print('failed removal')
+
+                print('Could not set each_tag.visible to False')
                 pass
+            
         self.trajtags[:] = []
         
         
@@ -444,10 +486,10 @@ class TrajCleaner(HasTraits):
             
             
                 self.trajtags.append(trajtag)
-            
+ 
+num_colors = 20
+traj_2_color_float = {  i+1 : (i+0.01)/num_colors    for i in range(1,num_colors+1)    }
 
-num_colors = 10
-traj_2_color_float = {  i+1 : (i+0.5)/num_colors    for i in range(num_colors)    }
          
 def assign_colors_float(X):
     '''Outputs a float value between 0 and 1 
