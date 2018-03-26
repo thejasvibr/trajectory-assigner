@@ -18,7 +18,7 @@ from mayavi import mlab
 from mayavi.core.api import PipelineBase
 from mayavi.core.ui.api import MayaviScene, SceneEditor, \
                 MlabSceneModel
-
+from tvtk.api import tvtk
 
 
 class TrajAssigner(HasTraits):  
@@ -86,6 +86,7 @@ class TrajAssigner(HasTraits):
         print('running setup')
         self.generate_color_and_size()
         self.fig = mlab.figure(figure=mlab.gcf())
+        self.fig.scene.interactor.interactor_style = tvtk.InteractorStyleTerrain()
         self.update_plot()
         
         # The general mouse based clicker - which reveals point information
