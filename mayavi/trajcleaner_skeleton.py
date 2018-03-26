@@ -445,6 +445,7 @@ class TrajCleaner(HasTraits):
             self.labtraj_data['traj_num'][orig_index] = new_trajnum
             
             print('Trajectory succesfully re-assigned for point #'+str(orig_index))
+            self.generate_color_and_size()
             self.update_plot()
         except:
             print('Unable to re-assign !!') 
@@ -487,8 +488,8 @@ class TrajCleaner(HasTraits):
                 self.trajtags.append(trajtag)
             
 
-num_colors = 8
-traj_2_color_float = {  i+1 : (i+0.5)/num_colors    for i in range(num_colors)    }
+num_colors = 20
+traj_2_color_float = {  i+1 : (i+0.01)/num_colors    for i in range(1,num_colors+1)    }
          
 def assign_colors_float(X):
     '''Outputs a float value between 0 and 1 
