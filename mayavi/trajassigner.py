@@ -21,7 +21,7 @@ from mayavi.core.ui.api import MayaviScene, SceneEditor, \
 
 
 
-class TrajCleaner(HasTraits):  
+class TrajAssigner(HasTraits):  
     '''
     TODO : 
         1) Implement recalculation of point colors everytime the 
@@ -542,7 +542,7 @@ if __name__ == '__main__':
     lab_data['traj_num'] = kn_data['traj_num']#np.random.choice(range(2,4),num_pts)#np.concatenate((np.tile(2,onecolor_pts),
                             #np.tile(1, num_pts-onecolor_pts)))
     
-    traj_cleaner = TrajCleaner()
+    traj_cleaner = TrajAssigner()
     traj_cleaner.knwntraj_data = kn_data
     traj_cleaner.labtraj_data = lab_data
     traj_cleaner.configure_traits()
