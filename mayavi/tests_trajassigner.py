@@ -9,7 +9,7 @@ Created on Mon Mar 19 13:15:21 2018
 import numpy as np 
 import pandas as pd
 
-from trajcleaner_skeleton import *
+from trajassigner import *
 
 
 def testing_with_linearincreasedata():
@@ -37,7 +37,7 @@ def testing_with_linearincreasedata():
     lab_data['traj_num'] = kn_data['traj_num']#np.random.choice(range(2,4),num_pts)#np.concatenate((np.tile(2,onecolor_pts),
                             #np.tile(1, num_pts-onecolor_pts)))
     
-    traj_cleaner = TrajCleaner()
+    traj_cleaner = TrajAssigner()
     traj_cleaner.knwntraj_data = kn_data
     traj_cleaner.labtraj_data = lab_data
     traj_cleaner.configure_traits()
@@ -75,7 +75,7 @@ def testing_with_missingdata():
     lab_data = pd.DataFrame(data=txyz_somerows, columns = ['x','y','z','t'])
     lab_data['traj_num'] = kn_data['traj_num']
     
-    traj_cleaner = TrajCleaner()
+    traj_cleaner = TrajAssigner()
     traj_cleaner.knwntraj_data = kn_data
     traj_cleaner.labtraj_data = lab_data
     traj_cleaner.configure_traits()
@@ -114,7 +114,7 @@ def testing_with_missingxyz():
     lab_data['traj_num'] =  kn_data['traj_num']
     lab_data['x'][missing_rows] = np.nan
     
-    traj_cleaner = TrajCleaner()
+    traj_cleaner = TrajAssigner()
     traj_cleaner.knwntraj_data = kn_data
     traj_cleaner.labtraj_data = lab_data
     traj_cleaner.configure_traits()
@@ -152,7 +152,7 @@ def testing_with_multipletrajectories():
     kn_data['traj_num'] = kn_data['z_knwn'].copy()
     lab_data['traj_num'] = kn_data['z_knwn'].copy()
     
-    traj_cleaner = TrajCleaner()
+    traj_cleaner = TrajAssigner()
     traj_cleaner.knwntraj_data = kn_data
     traj_cleaner.labtraj_data = lab_data
     traj_cleaner.configure_traits()
