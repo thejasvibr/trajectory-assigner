@@ -122,14 +122,62 @@ def testing_with_missingxyz():
     return(traj_cleaner)
 
 
+def testing_with_multipletrajectories():
+    ''' REcreate 4 trajectories with the same trajectory tag and see if 
+    colour consistency remains. EAch trajectory should get a unique colour. 
+    
+    '''
+    t = np.linspace(0,1.0,15)    
+    freqs = np.linspace(1,5,5)
+    
+    traj_nums = range(1,freqs.size+1)
+    
+    kn_data = pd.DataFrame(data =None, columns=['x_knwn','y_knwn',
+                                                'z_knwn','t_knwn','traj_num'])
+    
+    kn_data['t_knwn'] = np.tile(t,freqs.size)
+    kn_data['y_knwn'] = np.concatenate(([ i*np.sin(2*np.pi*freqs[i]*t) for   i,each_traj in enumerate(traj_nums)]))
+    kn_data['x_knwn'] = np.tile(t,freqs.size)
+    kn_data['z_knwn'] = np.concatenate([np.tile(z,t.size) for z in traj_nums])
+    
+    
+    lab_data = pd.DataFrame(data=None,columns=['x','y','z','t','traj_num'])
+    lab_data['t'] = kn_data['t_knwn']+ 0.04
+    lab_data['x'] = kn_data['x_knwn'].copy()
+    lab_data['x'] += np.random.normal(0,0.1,lab_data['x'].size)
+    lab_data['y'] = kn_data['y_knwn'].copy()
+    lab_data['z'] = kn_data['z_knwn'].copy()
+    lab_data['z'] += np.random.normal(0,0.5,lab_data['z'].size)
+    
+    kn_data['traj_num'] = kn_data['z_knwn'].copy()
+    lab_data['traj_num'] = kn_data['z_knwn'].copy()
+    
+    traj_cleaner = TrajCleaner()
+    traj_cleaner.knwntraj_data = kn_data
+    traj_cleaner.labtraj_data = lab_data
+    traj_cleaner.configure_traits()
+    
+    return(traj_cleaner)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
 
 if __name__ == '__main__':
     
     #test1 = testing_with_linearincreasedata()
     
-    test_missing = testing_with_missingdata()
+    #test_missing = testing_with_missingdata()
     
     #test_missingxyz = testing_with_missingxyz()
+    
+    #test_multitraj = testing_with_multipletrajectories()
     
 
     
