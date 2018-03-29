@@ -36,12 +36,12 @@ Begin the Mayavi interactive visualisation
         traj_cleaner.configure_traits()
         
  ![](mayavi/screenshot1_trajcleaner.PNG)
-In this screenshot, a *known* trajectory point #6 has been left-button clicked, and the information 
+In this screenshot, a *known* point belonging to the #3 trajecotyr tag has been left-button clicked, and the information 
 is displayed on the top right. The tuple with 4 entries shows the x,y,z and timestamp of the position 
 at recording/emission (depending on the tracking system)
 
  ![](mayavi/screenshot2_trajcleaner.PNG)
- A *labelled* trajectory point #9 is being re-assigned by a right-click. 
+ A *labelled* trajectory point with no trajectory tag ('nan') is being re-assigned by a right-click to the #1 trajectory tag.
  
 After checking the trajectory assignment and performing reassignment close the
 Mayavi window and save the labld_traj pd.DataFrame to a csv 
