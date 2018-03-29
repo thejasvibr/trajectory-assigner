@@ -63,5 +63,5 @@ I've managed installing Mayavi into a conda environment (or perhaps a virtualenv
 ### Replicating the development environment in an Anaconda Python installation: 
 If using an Anaconda based Python installation, to replicate the environment used to build trajectory-assigner in a Windows 64bit system - please use the *mayavi_reqpkgs_spec_file.txt* and run this command in Anaconda Prompt : 
  
-        conda create --name <your_environmentname> --file <mayavi_reqpkgs_spec_file.txt>
+        conda create --name <your_environmentnamehere> --file mayavi_reqpkgs_spec_file.txt
  
