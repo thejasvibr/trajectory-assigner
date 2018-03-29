@@ -2,6 +2,8 @@
 A Mayavi based visualisation tool that allows the visualisation and re-assignment of a trajectory label when there are two
 sets of sources for the same trajectory/ies
 
+![](mayavi/screen_recording_features.gif)
+
 Use case :
 When an object's position is being estimated by two tracking systems, eg. video and acoustic tracking - it can be tricky to assign the positions from either system to the same trajectory. This module assumes a *known* source of trajectory points that have reliable trajectory tags (eg. those from video tracking), and a *labelled* set of trajectory points that have been assigned manuall or automatically, but may be unreliable (eg. those from acoustic tracking). 
 
