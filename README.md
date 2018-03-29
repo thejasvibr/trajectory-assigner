@@ -4,6 +4,8 @@ sets of sources for the same trajectory/ies
 
 ![](mayavi/screen_recording_features.gif)
 
+*A screen recording of an instance of trajectory-assigner in action. The GIF shows a few features such as point info display and trajectory tag re-assignment*
+
 Use case :
 When an object's position is being estimated by two tracking systems, eg. video and acoustic tracking - it can be tricky to assign the positions from either system to the same trajectory. This module assumes a *known* source of trajectory points that have reliable trajectory tags (eg. those from video tracking), and a *labelled* set of trajectory points that have been assigned manuall or automatically, but may be unreliable (eg. those from acoustic tracking). 
 
