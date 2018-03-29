@@ -18,10 +18,13 @@ The current version of the module allows a user to :
 3) Trajectory reassignment of *known* points 
 
 
+### More information on the features in trajectory-assigner are found on the associated wiki page/s [here](https://github.com/thejasvibr/trajectory-assigner/wiki)
+
+
 ### Usage : 
-Initiate a TrajCleaner instance 
+Initiate a TrajAssigner instance 
         
-        traj_cleaner = TrajCleaner()
+        traj_cleaner = TrajAssigner()
         
         # assign the labelled and known trajectory datasets to the instance 
         
