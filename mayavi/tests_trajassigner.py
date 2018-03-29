@@ -177,7 +177,7 @@ if __name__ == '__main__':
     
     #test_missingxyz = testing_with_missingxyz()
     
-    #test_multitraj = testing_with_multipletrajectories()
+    test_multitraj = testing_with_multipletrajectories()
     
 
     
