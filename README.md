@@ -61,7 +61,7 @@ The primary visualisation package to visualise the data is Mayavi 4.5. As of now
 I've managed installing Mayavi into a conda environment (or perhaps a virtualenv too). Instructions for installing Mayavi are found [here](http://docs.enthought.com/mayavi/mayavi/installation.html). In addition to Mayavi (and its dependences), trajcleaner also relies on Pandas and easyGui which need to be additionally downloaded. 
 
 ### Replicating the development environment in an Anaconda Python installation: 
-If using an Anaconda based Python installation, to replicate the environment used to build trajcleaner in a Windows 64bit system - please use the *mayavi_reqpkgs_spec_file.txt* and run this command in Anaconda Prompt : 
+If using an Anaconda based Python installation, to replicate the environment used to build trajectory-assigner in a Windows 64bit system - please use the *mayavi_reqpkgs_spec_file.txt* and run this command in Anaconda Prompt : 
  
-        conda create --name <env> --file <this file>
+        conda create --name <your_environmentname> --file <mayavi_reqpkgs_spec_file.txt>
  
