@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """Trajectory cleaner
 
+This module relies heavily on the example scripts in
+the Example gallery of the Mayavi documentation 
+link : https://tinyurl.com/p6ecx6n
+
 Created on Mon Mar 19 13:17:09 2018
 
 @author: tbeleyur
@@ -531,4 +535,4 @@ if __name__ == '__main__':
     traj_cleaner.knwntraj_data = kn_data
     traj_cleaner.labtraj_data = lab_data
     traj_cleaner.configure_traits()
-    
+

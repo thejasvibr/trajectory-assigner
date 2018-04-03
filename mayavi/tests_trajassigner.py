@@ -171,13 +171,13 @@ def testing_with_multipletrajectories():
 
 if __name__ == '__main__':
     
-    #test1 = testing_with_linearincreasedata()
+    test1 = testing_with_linearincreasedata()
     
     #test_missing = testing_with_missingdata()
     
     #test_missingxyz = testing_with_missingxyz()
     
-    test_multitraj = testing_with_multipletrajectories()
+    #test_multitraj = testing_with_multipletrajectories()
     
 
     
